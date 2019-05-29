@@ -1,4 +1,8 @@
-*/Debug
-*/Release
-*/x64
+/Debug
+/Release
+/x64
 .vs/
+
+/ppm/Debug
+/ppm/Release
+/ppm/x64
