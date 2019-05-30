@@ -29,7 +29,7 @@ std::string replace_all(std::string& str, const std::string& from, const std::st
 	return str;
 }
 
-void ppm_write_header(std::string name, const char* architecture = "x64")
+void ppm_write_header(const std::string& name, const char* architecture = "x64")
 {
 	std::string s = R"(workspace "__NAME__"
 	startproject "__NAME__"
@@ -51,7 +51,7 @@ outputDir = "/%{cfg.system}/%{cfg.architecture}/%{cfg.buildcfg}")";
 
 }
 
-void ppm_write_project(std::string name, bool modifyExisting = false, const char* architecture = "x64", const char* kind = "ConsoleApp")
+void ppm_write_project(const std::string& name, bool modifyExisting = false, const char* architecture = "x64", const char* kind = "ConsoleApp")
 {
 	std::string s(R"(
 
@@ -112,7 +112,7 @@ project "__NAME__"
 	file.close();
 }
 
-void ppm_create_default_files(const std::string name)
+void ppm_create_default_files(const std::string& name)
 {
 	std::ofstream temp(name + "/"+ name + "/src/main.cpp");
 	std::string s(R"(#include "pch.h"
@@ -142,7 +142,7 @@ int main(int argc, char** args)
 	temp.close();
 }
 
-void ppm_create_folders(const std::string name, bool addNameToAll = true)
+void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 {
 	if(addNameToAll)
 	{
@@ -159,7 +159,7 @@ void ppm_create_folders(const std::string name, bool addNameToAll = true)
 	}
 }
 
-void ppm_append_app(const std::string name, const char* architecture = "x64")
+void ppm_append_app(const std::string& name, const char* architecture = "x64")
 {
 	if (!std::filesystem::exists("/premake5.lua"))
 	{
@@ -170,7 +170,7 @@ void ppm_append_app(const std::string name, const char* architecture = "x64")
 	ppm_write_project(name, true);
 }
 
-void ppm_append_lib(const std::string name, const char* architecture = "x64")
+void ppm_append_lib(const std::string& name, const char* architecture = "x64")
 {
 	if (!std::filesystem::exists("/premake5.lua"))
 	{
@@ -251,11 +251,9 @@ int main(int argc, char** args)
 	}
 	else if(!strcmp(cmd, "add"))
 	{
-		char* name;
-
 		if (argc == 4)
 		{
-			name = args[3];
+			char* name = args[3];
 			const auto type = args[2];
 
 			if (!strcmp(type, "lib"))
