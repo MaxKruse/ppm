@@ -1,8 +1,2 @@
-/Debug
-/Release
-/x64
+/bin
 .vs/
-
-/ppm/Debug
-/ppm/Release
-/ppm/x64
