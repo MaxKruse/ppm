@@ -10,7 +10,7 @@
 
 #define APP_VERSION_MAJOR 0
 #define APP_VERSION_MINOR 2
-#define APP_VERSION_PATCH 0
+#define APP_VERSION_PATCH 1
 
 #define APP_VERSION \
 	STRINGIFY(APP_VERSION_MAJOR) "." \
@@ -153,7 +153,7 @@ void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 	}
 }
 
-void ppm_append_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
+void ppm_append_project(char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	if (!std::filesystem::exists("./premake5.lua"))
 	{
@@ -164,7 +164,7 @@ void ppm_append_project(const char* name, const char* kind = "ConsoleApp", const
 	ppm_write_project(name, kind, true);
 }
 
-void ppm_init_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
+void ppm_init_project(char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	ppm_create_folders(name);
 	ppm_write_header(name);
@@ -208,8 +208,8 @@ int main(const int argc, char** args)
 
 		if (argc == 4)
 		{
-			const auto name = args[3];
-			const auto type = args[2];
+			char* name = args[3];
+			char* type = args[2];
 
 			if (!strcmp(type, "app"))
 			{
@@ -238,8 +238,8 @@ int main(const int argc, char** args)
 	{
 		if (argc == 4)
 		{
-			const auto name = args[3];
-			const auto type = args[2];
+			char* name = args[3];
+			char* type = args[2];
 
 			if (!strcmp(type, "app"))
 			{
