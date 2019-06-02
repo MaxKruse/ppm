@@ -51,7 +51,7 @@ outputDir = "/%{cfg.system}/%{cfg.architecture}/%{cfg.buildcfg}")";
 
 }
 
-void ppm_write_project(const std::string& name, bool modifyExisting = false, const char* architecture = "x64", const char* kind = "ConsoleApp")
+void ppm_write_project(const std::string& name, const char* kind = "ConsoleApp", bool modifyExisting = false)
 {
 	std::string s(R"(
 
@@ -61,6 +61,8 @@ project "__NAME__"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "On"
+	characterset "Unicode"
+	vectorextensions "AVX"
 
 	targetdir ("bin/%{prj.name}" .. outputDir)
 	objdir ("bin/%{prj.name}/intermediates" .. outputDir)
@@ -97,16 +99,7 @@ project "__NAME__"
 		symbols "Off")");
 	s = replace_all(s, "__NAME__", name);
 	s = replace_all(s, "__KIND__", kind);
-
-	std::string lua_str;
-	if(modifyExisting)
-	{
-		lua_str = "premake5.lua";
-	}
-	else
-	{
-		lua_str = name + "/premake5.lua";
-	}
+	std::string lua_str = modifyExisting ? "premake5.lua" : name + "/premake5.lua";
 	std::ofstream file(lua_str, std::fstream::app);
 	file.write(s.c_str(), s.size());
 	file.close();
@@ -137,14 +130,15 @@ int main(int argc, char** args)
 #include <vector>
 #include <filesystem>
 #include <algorithm>
-#include <chrono>)";
+#include <chrono>
+#include <utility>)";
 	temp.write(s.c_str(), s.size());
 	temp.close();
 }
 
 void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 {
-	if(addNameToAll)
+	if (addNameToAll)
 	{
 		std::filesystem::create_directory(name);
 		std::filesystem::create_directory(name + "/" + name);
@@ -159,57 +153,38 @@ void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 	}
 }
 
-void ppm_append_app(const std::string& name, const char* architecture = "x64")
+void ppm_append_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	if (!std::filesystem::exists("/premake5.lua"))
 	{
-		std::cerr << "cannot append app to project " << name << ": premake5.lua doesnt exist";
+		std::cerr << "cannot append app to project " << name << ": premake5.lua doesnt exist\n";
 		return;
 	}
 	ppm_create_folders(name, false);
-	ppm_write_project(name, true);
+	ppm_write_project(name, kind, true);
 }
 
-void ppm_append_lib(const std::string& name, const char* architecture = "x64")
-{
-	if (!std::filesystem::exists("/premake5.lua"))
-	{
-		std::cerr << "cannot append lib to project " << name << ": premake5.lua doesnt exist";
-		return;
-	}
-	ppm_create_folders(name, false);
-	ppm_write_project(name, true);
-}
-
-void ppm_init_app(const char* name, const char* architecture = "x64")
+void ppm_init_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	ppm_create_folders(name);
 	ppm_write_header(name);
-	ppm_write_project(name);
-	ppm_create_default_files(name);
-}
-
-void ppm_init_lib(const char* name, const char* architecture = "x64")
-{
-	ppm_create_folders(name);
-	ppm_write_header(name);
-	ppm_write_project(name, "StaticLib");
+	ppm_write_project(name, kind);
 	ppm_create_default_files(name);
 }
 
 void print_usage()
 {
-	printf("Usage: %s init [app/lib] <name>\n", APP_NAME);
-	printf("Usage: %s add <app/lib> <name>\n", APP_NAME);
+	printf("Usage: %s init [app/lib/dll/win] <name>\n", APP_NAME);
+	printf("Usage: %s add <app/lib/dll/win> <name>\n", APP_NAME);
 	printf("Usage: %s <version/-v/-version>\n", APP_NAME);
 }
 
 int main(int argc, char** args)
 {
 	srand(static_cast<unsigned>(time(nullptr)));
-	if(argc == 2)
+	if (argc == 2)
 	{
-		if(!strcmp(args[1], "version") || !strcmp(args[1], "-v") || !strcmp(args[1], "-version"))
+		if (!strcmp(args[1], "version") || !strcmp(args[1], "-v") || !strcmp(args[1], "-version"))
 		{
 			printf("%s, v%s", APP_NAME, APP_VERSION);
 			return 0;
@@ -224,14 +199,14 @@ int main(int argc, char** args)
 
 	const auto cmd = args[1];
 
-	if(!strcmp(cmd, "init"))
+	if (!strcmp(cmd, "init"))
 	{
 		char* name;
 
 		if (argc == 3)
 		{
 			name = args[2];
-			ppm_init_app(name);
+			ppm_init_project(name);
 		}
 
 		if (argc == 4)
@@ -239,30 +214,56 @@ int main(int argc, char** args)
 			name = args[3];
 			const auto type = args[2];
 
-			if (!strcmp(type, "lib"))
+			if (!strcmp(type, "app"))
 			{
-				ppm_init_lib(name);
+				ppm_init_project(name);
+			}
+			else if (!strcmp(type, "lib"))
+			{
+				ppm_init_project(name, "StaticLib");
+			}
+			else if (!strcmp(type, "dll"))
+			{
+				ppm_init_project(name, "SharedLib");
+			}
+			else if (!strcmp(type, "win"))
+			{
+				ppm_init_project(name, "WindowedApp");
 			}
 			else
 			{
-				ppm_init_app(name);
+				std::cerr << "unsupported type given: " << type << "\n";
+				return 1;
 			}
 		}
 	}
-	else if(!strcmp(cmd, "add"))
+	else if (!strcmp(cmd, "add"))
 	{
 		if (argc == 4)
 		{
 			char* name = args[3];
 			const auto type = args[2];
 
-			if (!strcmp(type, "lib"))
+			if (!strcmp(type, "app"))
 			{
-				ppm_append_lib(name);
+				ppm_init_project(name);
+			}
+			else if (!strcmp(type, "lib"))
+			{
+				ppm_init_project(name, "StaticLib");
+			}
+			else if (!strcmp(type, "dll"))
+			{
+				ppm_init_project(name, "SharedLib");
+			}
+			else if (!strcmp(type, "win"))
+			{
+				ppm_init_project(name, "WindowedApp");
 			}
 			else
 			{
-				ppm_append_app(name);
+				std::cerr << "unsupported type given: " << type << "\n";
+				return 1;
 			}
 		}
 	}
