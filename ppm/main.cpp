@@ -99,7 +99,7 @@ project "__NAME__"
 		symbols "Off")");
 	s = replace_all(s, "__NAME__", name);
 	s = replace_all(s, "__KIND__", kind);
-	std::string lua_str = modifyExisting ? "premake5.lua" : name + "/premake5.lua";
+	std::string lua_str = modifyExisting ? ("premake5.lua") : (name + "/premake5.lua");
 	std::ofstream file(lua_str, std::fstream::app);
 	file.write(s.c_str(), s.size());
 	file.close();
@@ -155,9 +155,9 @@ void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 
 void ppm_append_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
-	if (!std::filesystem::exists("/premake5.lua"))
+	if (!std::filesystem::exists("./premake5.lua"))
 	{
-		std::cerr << "cannot append app to project " << name << ": premake5.lua doesnt exist\n";
+		std::cout << "Cannot append app to project " << name << ": premake5.lua doesnt exist\n";
 		return;
 	}
 	ppm_create_folders(name, false);
@@ -179,9 +179,8 @@ void print_usage()
 	printf("Usage: %s <version/-v/-version>\n", APP_NAME);
 }
 
-int main(int argc, char** args)
+int main(const int argc, char** args)
 {
-	srand(static_cast<unsigned>(time(nullptr)));
 	if (argc == 2)
 	{
 		if (!strcmp(args[1], "version") || !strcmp(args[1], "-v") || !strcmp(args[1], "-version"))
@@ -201,17 +200,15 @@ int main(int argc, char** args)
 
 	if (!strcmp(cmd, "init"))
 	{
-		char* name;
-
 		if (argc == 3)
 		{
-			name = args[2];
+			const auto name = args[2];
 			ppm_init_project(name);
 		}
 
 		if (argc == 4)
 		{
-			name = args[3];
+			const auto name = args[3];
 			const auto type = args[2];
 
 			if (!strcmp(type, "app"))
@@ -232,7 +229,7 @@ int main(int argc, char** args)
 			}
 			else
 			{
-				std::cerr << "unsupported type given: " << type << "\n";
+				std::cout << "unsupported type given: " << type << "\n";
 				return 1;
 			}
 		}
@@ -241,28 +238,28 @@ int main(int argc, char** args)
 	{
 		if (argc == 4)
 		{
-			char* name = args[3];
+			const auto name = args[3];
 			const auto type = args[2];
 
 			if (!strcmp(type, "app"))
 			{
-				ppm_init_project(name);
+				ppm_append_project(name);
 			}
 			else if (!strcmp(type, "lib"))
 			{
-				ppm_init_project(name, "StaticLib");
+				ppm_append_project(name, "StaticLib");
 			}
 			else if (!strcmp(type, "dll"))
 			{
-				ppm_init_project(name, "SharedLib");
+				ppm_append_project(name, "SharedLib");
 			}
 			else if (!strcmp(type, "win"))
 			{
-				ppm_init_project(name, "WindowedApp");
+				ppm_append_project(name, "WindowedApp");
 			}
 			else
 			{
-				std::cerr << "unsupported type given: " << type << "\n";
+				std::cout << "unsupported type given: " << type << "\n";
 				return 1;
 			}
 		}
