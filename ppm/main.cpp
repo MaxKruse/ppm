@@ -109,9 +109,10 @@ project "__NAME__"
 	file.close();
 }
 
-void ppm_create_default_files(const std::string& name)
+void ppm_create_default_files(const std::string& name, bool addNameToAll = true)
 {
-	std::ofstream temp(name + "/"+ name + "/src/main.cpp");
+	std::string main_path = addNameToAll ? (name + "/" + name) : name;
+	std::ofstream temp(main_path + "/src/main.cpp");
 	std::string s(R"(#include "pch.h"
 
 int main(int argc, char** args)
@@ -123,12 +124,12 @@ int main(int argc, char** args)
 	temp.write(s.c_str(), s.size());
 	temp.close();
 
-	temp.open(name + "/" + name + "/src/pch.cpp");
+	temp.open(main_path + "/src/pch.cpp");
 	s = R"(#include "pch.h")";
 	temp.write(s.c_str(), s.size());
 	temp.close();
 
-	temp.open(name + "/" + name + "/src/pch.h");
+	temp.open(main_path + "/src/pch.h");
 	s = R"(#include <cstdio>
 #include <string>	
 #include <vector>
@@ -166,6 +167,11 @@ void ppm_append_project(char* name, const char* kind = "ConsoleApp", const char*
 	}
 	ppm_create_folders(name, false);
 	ppm_write_project(name, kind, true);
+
+	if(!strcmp(kind, "ConsoleApp"))
+	{
+		ppm_create_default_files(name, false);
+	}
 }
 
 void ppm_init_project(char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
@@ -173,7 +179,11 @@ void ppm_init_project(char* name, const char* kind = "ConsoleApp", const char* a
 	ppm_create_folders(name);
 	ppm_write_header(name);
 	ppm_write_project(name, kind);
-	ppm_create_default_files(name);
+
+	if (!strcmp(kind, "ConsoleApp"))
+	{
+		ppm_create_default_files(name);
+	}
 }
 
 void print_usage()
