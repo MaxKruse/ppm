@@ -12,6 +12,10 @@
 #define APP_VERSION_MINOR 2
 #define APP_VERSION_PATCH 1
 
+#define BUILD_INFO \
+	STRINGIFY(__DATE__) " - " \
+	STRINGIFY(__TIME__)
+
 #define APP_VERSION \
 	STRINGIFY(APP_VERSION_MAJOR) "." \
 	STRINGIFY(APP_VERSION_MINOR) "." \
@@ -79,7 +83,7 @@ project "__NAME__"
 
 	includedirs
 	{
-		"%{prj.name}/include",
+		"%{prj.name}/src/include",
 	}
 
 	links
@@ -185,7 +189,8 @@ int main(const int argc, char** args)
 	{
 		if (!strcmp(args[1], "version") || !strcmp(args[1], "-v") || !strcmp(args[1], "-version"))
 		{
-			printf("%s, v%s", APP_NAME, APP_VERSION);
+			printf("%s, v%s\n", APP_NAME, APP_VERSION);
+			printf("Build Info: %s", BUILD_INFO);
 			return 0;
 		}		
 	}
