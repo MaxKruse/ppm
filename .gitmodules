@@ -1,0 +1,3 @@
+[submodule "submodules/CommandParser"]
+	path = submodules/CommandParser
+	url = https://github.com/MaxKruse/CommandParser
