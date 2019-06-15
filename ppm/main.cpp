@@ -193,15 +193,9 @@ int main(const int argc, char** args)
 	auto cmdParser = new CP::CommandParser(argc, args);
 
 	cmdParser->RegisterCommand({ "-v", "Version", "Print the version" });
-	cmdParser->RegisterCommand({ "-version", "Version", "Print the version" });
 	cmdParser->RegisterCommand({ "version", "Version", "Print the version" });
+	cmdParser->RegisterCommand({ "-version", "Version", "Print the version" });
 	cmdParser->ConsumeFlags();
-
-	if(!cmdParser->RequireParams(3))
-	{
-		cmdParser->PrintUsage({ "init/add", "app/lib/dll/win", "name" });
-		return 1;
-	}
 
 	if (cmdParser->HasCommand("Version"))
 	{
@@ -210,6 +204,11 @@ int main(const int argc, char** args)
 		return 0;
 	}
 
+	if(!cmdParser->RequireParams(3))
+	{
+		cmdParser->PrintUsage({ "init/add", "app/lib/dll/win", "name" });
+		return 1;
+	}
 
 	if (cmdParser->GetParam(1) == "init")
 	{
