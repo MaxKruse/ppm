@@ -2,6 +2,8 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#define CP_SINGLE_HEADER
+#include "CP.h"
 
 #define APP_NAME "ppm"
 
@@ -158,7 +160,7 @@ void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 	}
 }
 
-void ppm_append_project(char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
+void ppm_append_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	if (!std::filesystem::exists("./premake5.lua"))
 	{
@@ -174,7 +176,7 @@ void ppm_append_project(char* name, const char* kind = "ConsoleApp", const char*
 	}
 }
 
-void ppm_init_project(char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
+void ppm_init_project(const char* name, const char* kind = "ConsoleApp", const char* architecture = "x64")
 {
 	ppm_create_folders(name);
 	ppm_write_header(name);
@@ -186,103 +188,85 @@ void ppm_init_project(char* name, const char* kind = "ConsoleApp", const char* a
 	}
 }
 
-void print_usage()
-{
-	printf("Usage: %s init [app/lib/dll/win] <name>\n", APP_NAME);
-	printf("Usage: %s add <app/lib/dll/win> <name>\n", APP_NAME);
-	printf("Usage: %s <version/-v/-version>\n", APP_NAME);
-}
-
 int main(const int argc, char** args)
 {
-	if (argc == 2)
-	{
-		if (!strcmp(args[1], "version") || !strcmp(args[1], "-v") || !strcmp(args[1], "-version"))
-		{
-			printf("%s, v%s\n", APP_NAME, APP_VERSION);
-			printf("Build Info: %s", BUILD_INFO);
-			return 0;
-		}		
-	}
+	auto cmdParser = new CP::CommandParser(argc, args);
 
-	if (argc != 3 && argc != 4)
+	cmdParser->RegisterCommand({ "-v", "Version", "Print the version" });
+	cmdParser->ConsumeFlags();
+
+	if(!cmdParser->RequireParams(3))
 	{
-		print_usage();
+		cmdParser->PrintUsage({ "init/add", "app/lib/dll/win", "name" });
 		return 1;
 	}
 
-	const auto cmd = args[1];
-
-	if (!strcmp(cmd, "init"))
+	if (cmdParser->HasCommand("Version"))
 	{
-		if (argc == 3)
+		printf("%s, v%s\n", APP_NAME, APP_VERSION);
+		printf("Build Info: %s", BUILD_INFO);
+		return 0;
+	}
+
+
+	if (cmdParser->GetParam(1) == "init")
+	{
+		const auto type = cmdParser->GetParam(2);
+		const auto name = cmdParser->GetParam(3).c_str();
+		ppm_init_project(name);
+
+
+		if (type == "app")
 		{
-			const auto name = args[2];
 			ppm_init_project(name);
 		}
-
-		if (argc == 4)
+		else if (type == "lib")
 		{
-			char* name = args[3];
-			char* type = args[2];
-
-			if (!strcmp(type, "app"))
-			{
-				ppm_init_project(name);
-			}
-			else if (!strcmp(type, "lib"))
-			{
-				ppm_init_project(name, "StaticLib");
-			}
-			else if (!strcmp(type, "dll"))
-			{
-				ppm_init_project(name, "SharedLib");
-			}
-			else if (!strcmp(type, "win"))
-			{
-				ppm_init_project(name, "WindowedApp");
-			}
-			else
-			{
-				std::cout << "unsupported type given: " << type << "\n";
-				return 1;
-			}
+			ppm_init_project(name, "StaticLib");
 		}
-	}
-	else if (!strcmp(cmd, "add"))
-	{
-		if (argc == 4)
+		else if (type == "dll")
 		{
-			char* name = args[3];
-			char* type = args[2];
-
-			if (!strcmp(type, "app"))
-			{
-				ppm_append_project(name);
-			}
-			else if (!strcmp(type, "lib"))
-			{
-				ppm_append_project(name, "StaticLib");
-			}
-			else if (!strcmp(type, "dll"))
-			{
-				ppm_append_project(name, "SharedLib");
-			}
-			else if (!strcmp(type, "win"))
-			{
-				ppm_append_project(name, "WindowedApp");
-			}
-			else
-			{
-				std::cout << "unsupported type given: " << type << "\n";
-				return 1;
-			}
+			ppm_init_project(name, "SharedLib");
 		}
+		else if (type == "win")
+		{
+			ppm_init_project(name, "WindowedApp");
+		}
+		else
+		{
+			std::cout << "unsupported type given: " << type << "\n";
+			return 1;
+		}
+		
 	}
-	else
+	else if (cmdParser->GetParam(1) == "add")
 	{
-		print_usage();
-		return 1;
+		const auto type = cmdParser->GetParam(2);
+		const auto name = cmdParser->GetParam(3).c_str();
+		ppm_init_project(name);
+
+
+		if (type == "app")
+		{
+			ppm_append_project(name);
+		}
+		else if (type == "lib")
+		{
+			ppm_append_project(name, "StaticLib");
+		}
+		else if (type == "dll")
+		{
+			ppm_append_project(name, "SharedLib");
+		}
+		else if (type == "win")
+		{
+			ppm_append_project(name, "WindowedApp");
+		}
+		else
+		{
+			std::cout << "unsupported type given: " << type << "\n";
+			return 1;
+		}
 	}
 	return 0;
 }
