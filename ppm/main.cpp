@@ -193,6 +193,8 @@ int main(const int argc, char** args)
 	auto cmdParser = new CP::CommandParser(argc, args);
 
 	cmdParser->RegisterCommand({ "-v", "Version", "Print the version" });
+	cmdParser->RegisterCommand({ "-version", "Version", "Print the version" });
+	cmdParser->RegisterCommand({ "version", "Version", "Print the version" });
 	cmdParser->ConsumeFlags();
 
 	if(!cmdParser->RequireParams(3))
