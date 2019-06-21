@@ -15,8 +15,8 @@
 #define APP_VERSION_PATCH 0
 
 #define BUILD_INFO \
-	STRINGIFY(__DATE__) " - " \
-	STRINGIFY(__TIME__)
+	__DATE__ " - " \
+	__TIME__ 
 
 #define APP_VERSION \
 	STRINGIFY(APP_VERSION_MAJOR) "." \
@@ -54,7 +54,7 @@ void write_file(const std::string& name, const std::string text, bool append = f
 		file.open(name);
 	}
 
-	file.write(text.c_str(), text.size());
+	file << text;
 	file.close();
 }
 
@@ -307,39 +307,39 @@ void print_help()
 
 int main(const int argc, char** args)
 {
-	auto cmdParser = new CP::CommandParser(argc, args);
+	auto cmdParser = CP::CommandParser(argc, args);
 
-	cmdParser->RegisterCommand({ "-v", "Version", "Print the version" });
-	cmdParser->RegisterCommand({ "-version", "Version", "Print the version" });
-	cmdParser->RegisterCommand({ "-help", "Help", "Print help" });
-	cmdParser->RegisterCommand({ "-pch", "PCH", "Use pch" });
-	cmdParser->ConsumeFlags();
-	const bool usePch = cmdParser->HasCommand("PCH");
+	cmdParser.RegisterCommand({ "-v", "Version", "Print the version" });
+	cmdParser.RegisterCommand({ "-version", "Version", "Print the version" });
+	cmdParser.RegisterCommand({ "-help", "Help", "Print help" });
+	cmdParser.RegisterCommand({ "-pch", "PCH", "Use pch" });
+	cmdParser.ConsumeFlags();
+	const bool usePch = cmdParser.HasCommand("PCH");
 
-	if (cmdParser->HasCommand("Version"))
+	if (cmdParser.HasCommand("Version"))
 	{
 		printf("%s, v%s\n", APP_NAME, APP_VERSION);
 		printf("Build Info: %s", BUILD_INFO);
 		return 0;
 	}
 
-	if(cmdParser->HasCommand("Help"))
+	if(cmdParser.HasCommand("Help"))
 	{
-		cmdParser->PrintUsage({ "init/add", "app/lib/dll/win", "name" });
+		cmdParser.PrintUsage({ "init/add", "app/lib/dll/win", "name" });
 		print_help();
 		return 0;
 	}
 
-	if(!cmdParser->RequireParams(3))
+	if(!cmdParser.RequireParams(3))
 	{
-		cmdParser->PrintUsage({ "init/add", "app/lib/dll/win", "name" });
+		cmdParser.PrintUsage({ "init/add", "app/lib/dll/win", "name" });
 		return 1;
 	}
 
-	if (cmdParser->GetParam(1) == "init")
+	if (cmdParser.GetParam(1) == "init")
 	{
-		const auto type = cmdParser->GetParam(2);
-		const auto name = cmdParser->GetParam(3);
+		const auto type = cmdParser.GetParam(2);
+		const auto name = cmdParser.GetParam(3);
 
 		if (type == "app")
 		{
@@ -364,10 +364,10 @@ int main(const int argc, char** args)
 		}
 		
 	}
-	else if (cmdParser->GetParam(1) == "add")
+	else if (cmdParser.GetParam(1) == "add")
 	{
-		const auto type = cmdParser->GetParam(2);
-		const auto name = cmdParser->GetParam(3);
+		const auto type = cmdParser.GetParam(2);
+		const auto name = cmdParser.GetParam(3);
 
 
 		if (type == "app")
