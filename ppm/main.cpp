@@ -146,7 +146,7 @@ void ppm_create_default_files(const std::string& name, bool addNameToAll = true,
 	std::string main_path = addNameToAll ? (name + "/" + name) : name;
 	if(kind == "ConsoleApp")
 	{
-		write_file(main_path + "/src/main.cpp", R"(#include "pch.h"
+		write_file(main_path + "/src/main.cpp", R"(
 
 int main(int argc, char** args)
 {
