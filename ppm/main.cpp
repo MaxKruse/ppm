@@ -12,7 +12,7 @@
 
 #define APP_VERSION_MAJOR 0
 #define APP_VERSION_MINOR 3
-#define APP_VERSION_PATCH 1
+#define APP_VERSION_PATCH 2
 
 #define BUILD_INFO \
 	__DATE__ " - " \
@@ -271,21 +271,29 @@ void ppm_append_project(const std::string& name, const std::string& kind = "Cons
 	ppm_write_project(name, kind, true, usePch);
 
 	
-	ppm_create_default_files(name, false, usePch, kind);
-	
+	ppm_create_default_files(name, false, usePch, kind);	
 }
 
-void ppm_init_project(const std::string& name, const std::string& kind = "ConsoleApp", const bool usePch = false)
+void ppm_init_project(const std::string& name, const std::string& kind = "ConsoleApp", const bool usePch = false, const bool git = false)
 {
 	ppm_create_folders(name);
 	ppm_write_header(name);
 
 	const std::string defineStr = kind == "WindowedApp" ? "WXUSINGDLL" : "";
 
-	ppm_write_project(name, kind, false, usePch, defineStr);
-
-	
+	ppm_write_project(name, kind, false, usePch, defineStr);	
 	ppm_create_default_files(name, true, usePch, kind);
+
+	if(git)
+	{
+		write_file(name + "/.gitignore", R"(.vs/
+.vscode/
+bin/
+*.vcxproj
+)");
+	}
+	auto str = "cd \"" + name + "\" && git init && cd ..";
+	system(str.c_str());
 	
 }
 
@@ -313,8 +321,10 @@ int main(const int argc, char** args)
 	cmdParser.RegisterCommand({ "-version", "Version", "Print the version" });
 	cmdParser.RegisterCommand({ "-help", "Help", "Print help" });
 	cmdParser.RegisterCommand({ "-pch", "PCH", "Use pch" });
+	cmdParser.RegisterCommand({ "-git", "Git", "Adds a default .gitignore as well as initializes the repo"});
 	cmdParser.ConsumeFlags();
 	const bool usePch = cmdParser.HasCommand("PCH");
+	const bool createGit = cmdParser.HasCommand("Git");
 
 	if (cmdParser.HasCommand("Version"))
 	{
@@ -343,19 +353,19 @@ int main(const int argc, char** args)
 
 		if (type == "app")
 		{
-			ppm_init_project(name, "ConsoleApp", usePch);
+			ppm_init_project(name, "ConsoleApp", usePch, createGit);
 		}
 		else if (type == "lib")
 		{
-			ppm_init_project(name, "StaticLib", usePch);
+			ppm_init_project(name, "StaticLib", usePch, createGit);
 		}
 		else if (type == "dll")
 		{
-			ppm_init_project(name, "SharedLib", usePch);
+			ppm_init_project(name, "SharedLib", usePch, createGit);
 		}
 		else if (type == "win")
 		{
-			ppm_init_project(name, "WindowedApp", usePch);
+			ppm_init_project(name, "WindowedApp", usePch, createGit);
 		}
 		else
 		{
