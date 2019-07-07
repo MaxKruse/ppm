@@ -11,8 +11,8 @@
 #define STRINGIFY(x) STRINGIFY_(x)
 
 #define APP_VERSION_MAJOR 0
-#define APP_VERSION_MINOR 3
-#define APP_VERSION_PATCH 2
+#define APP_VERSION_MINOR 4
+#define APP_VERSION_PATCH 0
 
 #define BUILD_INFO \
 	__DATE__ " - " \
@@ -22,6 +22,15 @@
 	STRINGIFY(APP_VERSION_MAJOR) "." \
 	STRINGIFY(APP_VERSION_MINOR) "." \
 	STRINGIFY(APP_VERSION_PATCH)
+
+struct ppm_config
+{
+	std::string Name;
+	std::string Kind;
+	bool Pch;
+	bool Git;
+
+};
 
 std::string replace_all(std::string& str, const std::string& from, const std::string& to) {
 	if (from.empty())
@@ -78,7 +87,7 @@ outputDir = "/%{cfg.system}/%{cfg.architecture}/%{cfg.buildcfg}")";
 	write_file(name + "/premake5.lua", s);
 }
 
-void ppm_write_project(const std::string& name, const std::string& kind = "ConsoleApp", bool modifyExisting = false, const bool usePch = false, const std::string& defines = "")
+void ppm_write_project(const ppm_config& config, bool modifyExisting = false, const std::string& defines = "")
 {
 	std::string s(R"(
 
@@ -129,22 +138,22 @@ project "__NAME__"
 		optimize "On"
 		symbols "Off")");
 
-	const std::string pchStr =  usePch ? R"(pchheader "pch.h"
+	const std::string pchStr = config.Pch ? R"(pchheader "pch.h"
 	pchsource "__NAME__/src/pch.cpp")" : "";
 
 	s = replace_all(s, "__PCH__", pchStr);
-	s = replace_all(s, "__NAME__", name);
-	s = replace_all(s, "__KIND__", kind);
+	s = replace_all(s, "__NAME__", config.Name);
+	s = replace_all(s, "__KIND__", config.Kind);
 	s = replace_all(s, "__DEFINES__", defines);
 	
-	std::string lua_str = modifyExisting ? ("premake5.lua") : (name + "/premake5.lua");
+	std::string lua_str = modifyExisting ? ("premake5.lua") : (config.Name + "/premake5.lua");
 	write_file(lua_str, s, true);
 }
 
-void ppm_create_default_files(const std::string& name, bool addNameToAll = true, const bool usePch = false, const std::string kind = "ConsoleApp")
+void ppm_create_default_files(const ppm_config& config, bool addNameToAll = true)
 {
-	std::string main_path = addNameToAll ? (name + "/" + name) : name;
-	if(kind == "ConsoleApp")
+	std::string main_path = addNameToAll ? (config.Name + "/" + config.Name) : config.Name;
+	if(config.Kind == "ConsoleApp")
 	{
 		write_file(main_path + "/src/main.cpp", R"(
 
@@ -153,11 +162,11 @@ int main(int argc, char** args)
 	printf("Hello World");
 	return 0;
 }
-)", false, usePch);
+)", false, config.Pch);
 
 	}
 
-	if(kind == "WindowedApp")
+	if(config.Kind == "WindowedApp")
 	{
 		// Main.cpp
 		write_file(main_path + "/src/Main.cpp", R"(#include <wx/wx.h>
@@ -170,7 +179,7 @@ cMain::cMain()
 }
 
 cMain::~cMain() {}
-)", false, usePch);
+)", false, config.Pch);
 
 		// cApp.cpp
 		write_file(main_path + "/src/cApp.cpp", R"(#include <wx/wx.h>
@@ -195,7 +204,7 @@ bool cApp::OnInit()
 	return true;
 }
 
-)", false, usePch);
+)", false, config.Pch);
 
 		// cApp.h
 		write_file(main_path + "/src/include/cApp.h", R"(#pragma once
@@ -229,7 +238,7 @@ private:
 	}
 	
 
-	if(usePch)
+	if(config.Pch)
 	{
 		write_file(main_path + "/src/pch.cpp", R"(#include "pch.h")");
 
@@ -260,40 +269,41 @@ void ppm_create_folders(const std::string& name, bool addNameToAll = true)
 	}
 }
 
-void ppm_append_project(const std::string& name, const std::string& kind = "ConsoleApp", const bool usePch = false)
+void ppm_append_project(const ppm_config& config)
 {
 	if (!std::filesystem::exists("./premake5.lua"))
 	{
-		std::cout << "Cannot append app to project " << name << ": premake5.lua doesnt exist\n";
+		std::cout << "Cannot append app to project " << config.Name << ": premake5.lua doesnt exist\n";
 		return;
 	}
-	ppm_create_folders(name, false);
-	ppm_write_project(name, kind, true, usePch);
+	ppm_create_folders(config.Name, false);
+	ppm_write_project(config, true);
 
 	
-	ppm_create_default_files(name, false, usePch, kind);	
+	ppm_create_default_files(config, false);	
 }
 
-void ppm_init_project(const std::string& name, const std::string& kind = "ConsoleApp", const bool usePch = false, const bool git = false)
+void ppm_init_project(const ppm_config& config)
 {
-	ppm_create_folders(name);
-	ppm_write_header(name);
+	ppm_create_folders(config.Name);
+	ppm_write_header(config.Name);
 
-	const std::string defineStr = kind == "WindowedApp" ? "WXUSINGDLL" : "";
+	const std::string defineStr = config.Kind == "WindowedApp" ? "WXUSINGDLL" : "";
 
-	ppm_write_project(name, kind, false, usePch, defineStr);	
-	ppm_create_default_files(name, true, usePch, kind);
+	ppm_write_project(config, false, defineStr);
+	ppm_create_default_files(config, true);
 
-	if(git)
+	if(config.Git)
 	{
-		write_file(name + "/.gitignore", R"(.vs/
+		write_file(config.Name + "/.gitignore", R"(.vs/
 .vscode/
 bin/
 *.vcxproj
 )");
+		write_file(config.Name + "/readme.md", "#" + config.Name + "\n\nGenerated with [ppm](https://github.com/MaxKruse/ppm)");
+		auto str = "cd \"" + config.Name + "\" && git init && git add . && git commit -am \"First commit - made by ppm\" && cd ..";
+		system(str.c_str());
 	}
-	auto str = "cd \"" + name + "\" && git init && cd ..";
-	system(str.c_str());
 	
 }
 
@@ -323,8 +333,6 @@ int main(const int argc, char** args)
 	cmdParser.RegisterCommand({ "-pch", "PCH", "Use pch" });
 	cmdParser.RegisterCommand({ "-git", "Git", "Adds a default .gitignore as well as initializes the repo"});
 	cmdParser.ConsumeFlags();
-	const bool usePch = cmdParser.HasCommand("PCH");
-	const bool createGit = cmdParser.HasCommand("Git");
 
 	if (cmdParser.HasCommand("Version"))
 	{
@@ -346,61 +354,41 @@ int main(const int argc, char** args)
 		return 1;
 	}
 
+	const auto type = cmdParser.GetParam(2);
+	std::string kind;
+	if (type == "app")
+	{
+		kind = "ConsoleApp";
+	}
+	else if (type == "lib")
+	{
+		kind = "StaticLib";
+	}
+	else if (type == "dll")
+	{
+		kind = "SharedLib";
+	}
+	else if (type == "win")
+	{
+		kind = "WindowedApp";
+	}
+	else
+	{
+		std::cout << "unsupported type given: " << type << "\n\n";
+		cmdParser.PrintUsage({ "init/add", "app/lib/dll/win", "name" });
+		print_help();
+		return 1;
+	}
+
+	ppm_config config{ cmdParser.GetParam(3), kind, cmdParser.HasCommand("PCH"), cmdParser.HasCommand("Git") };
+
 	if (cmdParser.GetParam(1) == "init")
 	{
-		const auto type = cmdParser.GetParam(2);
-		const auto name = cmdParser.GetParam(3);
-
-		if (type == "app")
-		{
-			ppm_init_project(name, "ConsoleApp", usePch, createGit);
-		}
-		else if (type == "lib")
-		{
-			ppm_init_project(name, "StaticLib", usePch, createGit);
-		}
-		else if (type == "dll")
-		{
-			ppm_init_project(name, "SharedLib", usePch, createGit);
-		}
-		else if (type == "win")
-		{
-			ppm_init_project(name, "WindowedApp", usePch, createGit);
-		}
-		else
-		{
-			std::cout << "unsupported type given: " << type << "\n";
-			return 1;
-		}
-		
+		ppm_init_project(config);
 	}
 	else if (cmdParser.GetParam(1) == "add")
 	{
-		const auto type = cmdParser.GetParam(2);
-		const auto name = cmdParser.GetParam(3);
-
-
-		if (type == "app")
-		{
-			ppm_append_project(name);
-		}
-		else if (type == "lib")
-		{
-			ppm_append_project(name, "StaticLib", usePch);
-		}
-		else if (type == "dll")
-		{
-			ppm_append_project(name, "SharedLib", usePch);
-		}
-		else if (type == "win")
-		{
-			ppm_append_project(name, "WindowedApp", usePch);
-		}
-		else
-		{
-			std::cout << "unsupported type given: " << type << "\n";
-			return 1;
-		}
+		ppm_append_project(config);
 	}
 	return 0;
 }
