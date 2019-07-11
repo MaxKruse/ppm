@@ -107,6 +107,8 @@ project "__NAME__"
 
 	files
 	{
+		"%{prj.name}/**.cpp",
+		"%{prj.name}/**.h",
 		"%{prj.name}/src/include/**.h",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
