@@ -302,7 +302,7 @@ void ppm_init_project(const ppm_config& config)
 bin/
 *.vcxproj
 )");
-		write_file(config.Name + "/readme.md", "#" + config.Name + "\n\nGenerated with [ppm](https://github.com/MaxKruse/ppm)");
+		write_file(config.Name + "/readme.md", "# " + config.Name + "\n\nGenerated with [ppm](https://github.com/MaxKruse/ppm)");
 		auto str = "cd \"" + config.Name + "\" && git init && git add . && git commit -am \"First commit - made by ppm\" && cd ..";
 		system(str.c_str());
 	}
