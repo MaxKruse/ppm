@@ -11,8 +11,8 @@
 #define STRINGIFY(x) STRINGIFY_(x)
 
 #define APP_VERSION_MAJOR 0
-#define APP_VERSION_MINOR 4
-#define APP_VERSION_PATCH 2
+#define APP_VERSION_MINOR 5
+#define APP_VERSION_PATCH 0
 
 #define BUILD_INFO \
 	__DATE__ " - " \
@@ -99,6 +99,7 @@ project "__NAME__"
 	staticruntime "On"
 	characterset "Unicode"
 	vectorextensions "AVX"
+	floatingpoints "Fast"
 
 	targetdir ("bin/%{prj.name}" .. outputDir)
 	objdir ("bin/%{prj.name}/intermediates" .. outputDir)
@@ -124,6 +125,11 @@ project "__NAME__"
 		"__DEFINES__"
 	}
 
+	flags
+	{
+		"MultiProcessorCompile"
+	}
+
 	links
 	{
 		
@@ -137,7 +143,7 @@ project "__NAME__"
 		symbols "Full"
 
 	filter "configurations:Release"
-		optimize "On"
+		optimize "Speed"
 		symbols "Off")");
 
 	const std::string pchStr = config.Pch ? R"(pchheader "pch.h"
