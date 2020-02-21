@@ -99,7 +99,7 @@ project "__NAME__"
 	staticruntime "On"
 	characterset "Unicode"
 	vectorextensions "AVX"
-	floatingpoints "Fast"
+	floatingpoint "Fast"
 
 	targetdir ("bin/%{prj.name}" .. outputDir)
 	objdir ("bin/%{prj.name}/intermediates" .. outputDir)
